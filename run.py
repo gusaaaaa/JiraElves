@@ -1,6 +1,9 @@
 import requests
 import re
 import base64
+from dotenv import dotenv_values
+
+config = dotenv_values(".env")
 
 def get_jira_title(domain, email, api_token, issue_key):
     url = f"https://{domain}/rest/api/3/issue/{issue_key}"
@@ -20,9 +23,9 @@ def get_jira_title(domain, email, api_token, issue_key):
     return response.json()["fields"]["summary"]
 
 def main():
-    jira_domain = "focusuy.atlassian.net"
-    email = "gus@focus.uy"
-    api_token = "ATATT3xFfGF0ppxAXnUEsiLHFA4InbxbIlicuoMD-uK3UEcwHjzkjEM2AaDV5t8vfiSE8d-nhh0McEtvEfp0EiqvZ7NArkUWcPQ7izz9kZk67SEptdNfWefepMDQnxhF6HUcPcGfTIZ2y8HwYE5iKsH8cvFcKSFEn0eLalNkaNXdLISkYp33_nI=EB1448BE"
+    jira_domain = config["JIRA_DOMAIN"]
+    email = config["JIRA_USER"]
+    api_token = config["JIRA_TOKEN"]
 
     with open("input_file.txt", "r") as f:
         lines = f.readlines()

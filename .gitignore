@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 input_file.txt
 output_file.md
+.env
