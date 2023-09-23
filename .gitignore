@@ -3,6 +3,6 @@ __pycache__/
 *$py.class
 .venv
 .DS_Store
-input_file.txt
-output_file.md
+input.txt
+output.txt
 .env

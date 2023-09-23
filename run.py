@@ -27,7 +27,7 @@ def main():
     email = config["JIRA_USER"]
     api_token = config["JIRA_TOKEN"]
 
-    with open("input_file.txt", "r") as f:
+    with open("input.txt", "r") as f:
         lines = f.readlines()
 
     new_lines = []
@@ -43,7 +43,7 @@ def main():
         new_lines.append(line)
         print(line, end='')  # Print the result to stdout
 
-    with open("output_file.md", "w") as f:
+    with open("output.txt", "w") as f:
         f.writelines(new_lines)
 
 if __name__ == "__main__":
