@@ -1,10 +1,14 @@
 import requests
 import re
+import base64
 
 def get_jira_title(domain, email, api_token, issue_key):
-    url = f"https://{domain}/rest/api/2/issue/{issue_key}"
+    url = f"https://{domain}/rest/api/3/issue/{issue_key}"
+
+    auth_base64 = base64.b64encode(bytes(f"{email}:{api_token}", 'ascii')).decode('ascii')
+
     headers = {
-        "Authorization": f"Basic {email}:{api_token}",
+        "Authorization": f"Basic {auth_base64}",
         "Accept": "application/json"
     }
 
@@ -17,7 +21,7 @@ def get_jira_title(domain, email, api_token, issue_key):
 
 def main():
     jira_domain = "focusuy.atlassian.net"
-    email = "gus@focus.com"
+    email = "gus@focus.uy"
     api_token = "ATATT3xFfGF0ppxAXnUEsiLHFA4InbxbIlicuoMD-uK3UEcwHjzkjEM2AaDV5t8vfiSE8d-nhh0McEtvEfp0EiqvZ7NArkUWcPQ7izz9kZk67SEptdNfWefepMDQnxhF6HUcPcGfTIZ2y8HwYE5iKsH8cvFcKSFEn0eLalNkaNXdLISkYp33_nI=EB1448BE"
 
     with open("input_file.txt", "r") as f:
@@ -30,7 +34,7 @@ def main():
             issue_key = match.group(1)
             title = get_jira_title(jira_domain, email, api_token, issue_key)
             if title:
-                markdown_link = f"[{issue_key}: {title}](https://{jira_domain}/browse/{issue_key})"
+                markdown_link = f"{title} [{issue_key}](https://{jira_domain}/browse/{issue_key})"
                 line = line.replace(match.group(0), markdown_link)
         new_lines.append(line)
 
