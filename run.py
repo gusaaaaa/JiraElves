@@ -32,15 +32,16 @@ def main():
 
     new_lines = []
     for line in lines:
-        match = re.search(rf"https://{jira_domain}/browse/(\w+-\d+)", line)
+        match = re.search(r"https://[\w.-]+/browse/(\w+-\d+)", line)
         if match:
             issue_key = match.group(1)
-            issue_number = issue_key.split('-')[1]
+            issue_number = issue_key.split('-')[1]  # Split by hyphen and take the second part
             title = get_jira_title(jira_domain, email, api_token, issue_key)
             if title:
                 markdown_link = f"{title} [#{issue_number}](https://{jira_domain}/browse/{issue_key})"
                 line = line.replace(match.group(0), markdown_link)
         new_lines.append(line)
+        print(line, end='')  # Print the result to stdout
 
     with open("output_file.md", "w") as f:
         f.writelines(new_lines)
