@@ -84,6 +84,10 @@ We're gearing up for the release of version 1.0.0 which includes the Falcon 9 si
 
 5. Watch as your `input.txt` transforms into an `output.txt` filled with descriptive markdown links!
 
+## Contribute 🤝
+
+Love what the elves are doing? Want to add more magic? We welcome contributions! Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 ## License 📜
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE.txt) for details.
