@@ -1,4 +1,4 @@
-# Contributing to Jira Elves 🧝‍♂️🧝‍♀️
+# 🧝‍♀️ Contributing to Jira Elves 🧝‍♂️
 
 Thank you for considering contributing to Jira Elves! Your efforts will help improve a tool that assists Jira users in mapping tickets with project progress.
 
