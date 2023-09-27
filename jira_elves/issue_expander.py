@@ -1,9 +1,6 @@
 import requests
 import re
 import base64
-from dotenv import dotenv_values
-
-config = dotenv_values(".env")
 
 def get_jira_title(domain, email, api_token, issue_key):
     url = f"https://{domain}/rest/api/3/issue/{issue_key}"
