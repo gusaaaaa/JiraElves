@@ -1,4 +1,5 @@
 import argparse
+import sys
 from jira_elves import expand_issue_in_line, fetch_jira_issues
 from dotenv import dotenv_values
 
@@ -9,8 +10,8 @@ def expand_issues():
     email = config["JIRA_USER"]
     api_token = config["JIRA_TOKEN"]
 
-    with open("input.txt", "r") as f:
-        lines = f.readlines()
+    # Reading lines from stdin
+    lines = sys.stdin.readlines()
 
     new_lines = []
     for line in lines:
@@ -30,7 +31,7 @@ def list_issues_in_release(release_number):
 
     issues = fetch_jira_issues(JQL_QUERY, jira_domain, email, api_token, ["key", "summary", "components"])
     for issue in issues:
-        print(issue["key"], "-", issue["fields"]["summary"])
+        print(f'https://{jira_domain}/browse/{issue["key"]}')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process JIRA tasks.')
