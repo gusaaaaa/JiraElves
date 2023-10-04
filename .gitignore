@@ -6,3 +6,5 @@ __pycache__/
 input.txt
 output.txt
 .env
+build/
+*.egg-info/

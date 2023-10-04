@@ -46,7 +46,7 @@ def list_issues_in_release(release_number):
     for issue in issues:
         print(f'https://{jira_domain}/browse/{issue.key}')
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Process JIRA tasks.')
     parser.add_argument('command', type=str, help='Use "expand" to expand issues or "list_release=RELEASE_NUMBER" to list issues in release.')
 
@@ -61,3 +61,6 @@ if __name__ == "__main__":
         list_issues_in_release(value)
     else:
         print("Invalid command. Use 'expand' or 'list_release=RELEASE_NUMBER'.")
+
+if __name__ == "__main__":
+    main()
