@@ -10,6 +10,8 @@ import textwrap
 config = dotenv_values(".env")
 
 jira_domain = config["JIRA_DOMAIN"]
+if not jira_domain.startswith("https://"):
+    jira_domain = "https://" + jira_domain
 jira_user = config["JIRA_USER"]
 jira_api_token = config["JIRA_TOKEN"]
 jira_project = config["JIRA_PROJECT"]
@@ -50,7 +52,7 @@ def list_issues_in_release(release_number):
     issues = jira.search_issues(f'project = {jira_project} and fixversion = {release_number} and status = Done ORDER BY created DESC')
 
     for issue in issues:
-        print(f'https://{jira_domain}/browse/{issue.key}')
+        print(f'{jira_domain}/browse/{issue.key}')
 
 def read_intentions():
     """
@@ -145,13 +147,16 @@ def command_create_issues_from_intentions():
     issue_field_list = []
     for intention_str in intention_list:
         ticket = intention_to_ticket(intention_str)
+        if ticket is None:
+            continue
         issue_field_list.append(from_ticket_to_jira_issue_fields(ticket))
 
-    issues = jira.create_issues(field_list=issue_field_list)
+    if issue_field_list:
+        issues = jira.create_issues(field_list=issue_field_list)
 
-    for issue in issues:
-        issue_key = issue['issue'].key
-        print(f"https://{jira_domain}/browse/{issue_key}")
+        for issue in issues:
+            issue_key = issue['issue'].key
+            print(f"{jira_domain}/browse/{issue_key}")
 
 def intention_to_ticket(intention_str):
     """
@@ -188,12 +193,20 @@ def intention_to_ticket(intention_str):
         messages=[
             {
             "role": "system",
-            "content": "The AI company JiraElves has created the Caladriel assistant. Caladriel converts intentions expressed in natural language, into JSON-formatted ticket descriptions. In order to achive this goal, first Caladriel corrects grammar and/or translates intentions to English if needed; then infers an ISSUE_TYPE, a NEED, and a CONTEXT from the updated intention; finally Caladriel uses the inferred ISSUE_TYPE, NEED, and CONTEXT as a foundation to describe the ticket. Note: Issue types can be any of \"Task\" (default value, in case it can't be inferred from the intention), \"Bug\", \"Epic\".\n\nJiraElves' Assistant gets the input:\n\"\"\"\nPrecisamos agregar un timeout a la clase TransferController. Actualmente, si una respuesta nunca llega, el sequencer se queda bloqueado indefinidamente.\n\"\"\"\n\nCaladriel's output:\n```\n{\n  \"issue_type\": \"Task\",\n  \"need\": \"Add a timeout to the TransferController class.\",\n  \"context\": \"Currently, if a response never arrives, the sequencer gets stuck indefinitely.\",\n  \"summary\": \"Allow TransferController to handle transfer_id of arbitrary type\",\n  \"background\": \"Currently, TransferController is only able to handle transfer_id that are integers. This is causing issues when the transfer_id is a string, or other type, and the controller is unable to properly handle the request.\",\n  \"user_story\": \"As a developer, I want to be able to use the TransferController to handle transfer_id of any type, so that I can make sure that all transfers are handled properly.\",\n  \"goals\": \"The goal is to make sure that TransferController is able to handle transfer_id of any type, including strings, integers, etc.\",\n  \"how_to_demo\": \"1. Create a transfer_id of a type other than integer\\\\n2. Use the TransferController to handle the request\\\\n3. Verify that the request is handled properly\",\n  \"acceptance_criteria\": \"- TransferController should be able to handle transfer_id of any data type\\\\n- All requests should be handled properly regardless of the data type of transfer_id\"\n}\n```",
+            "content": "The AI company JiraElves has created the Caladriel assistant. Caladriel converts intentions expressed in natural language, into JSON-formatted ticket descriptions. In order to achive this goal, first Caladriel corrects grammar and/or translates intentions to English if needed; then infers an ISSUE_TYPE, a NEED, and a CONTEXT from the updated intention; finally Caladriel uses the inferred ISSUE_TYPE, NEED, and CONTEXT as a foundation to describe the ticket. Note: Issue types can be any of \"Task\" (default value, in case it can't be inferred from the intention), \"Bug\", \"Epic\".\n\nJiraElves' Assistant gets the input:\n\"\"\"\nintention = <<<\nPrecisamos agregar un timeout a la clase TransferController. Actualmente, si una respuesta nunca llega, el sequencer se queda bloqueado indefinidamente.\n>>>\n\"\"\"\n\nCaladriel's output:\n```\n{\n  \"issue_type\": \"Task\",\n  \"need\": \"Add a timeout to the TransferController class.\",\n  \"context\": \"Currently, if a response never arrives, the sequencer gets stuck indefinitely.\",\n  \"summary\": \"Allow TransferController to handle transfer_id of arbitrary type\",\n  \"background\": \"Currently, TransferController is only able to handle transfer_id that are integers. This is causing issues when the transfer_id is a string, or other type, and the controller is unable to properly handle the request.\",\n  \"user_story\": \"As a developer, I want to be able to use the TransferController to handle transfer_id of any type, so that I can make sure that all transfers are handled properly.\",\n  \"goals\": \"The goal is to make sure that TransferController is able to handle transfer_id of any type, including strings, integers, etc.\",\n  \"how_to_demo\": \"1. Create a transfer_id of a type other than integer\\\\n2. Use the TransferController to handle the request\\\\n3. Verify that the request is handled properly\",\n  \"acceptance_criteria\": \"- TransferController should be able to handle transfer_id of any data type\\\\n- All requests should be handled properly regardless of the data type of transfer_id\"\n}\n```"
             },
             {
             "role": "user",
-            "content": intention_str,
-            }
+            "content": "intention = <<<\nWrite CONTRIBUTE.md\n>>>"
+            },
+            {
+            "role": "assistant",
+            "content": "{\n  \"issue_type\": \"Task\",\n  \"need\": \"Write CONTRIBUTE.md file.\",\n  \"context\": \"\",\n  \"summary\": \"Create CONTRIBUTE.md file\",\n  \"background\": \"\",\n  \"user_story\": \"As a contributor, I want a CONTRIBUTE.md file in the project repository, so that I can have guidelines on how to contribute to the project.\",\n  \"goals\": \"The goal is to provide contributors with clear guidelines on how to contribute to the project.\",\n  \"how_to_demo\": \"\",\n  \"acceptance_criteria\": \"The CONTRIBUTE.md file should be added to the project repository and contain clear and comprehensive guidelines on how to contribute.\"\n}"
+            },
+            {
+            "role": "user",
+            "content": f"intention = <<<\n{intention_str}\n>>>"
+            },
         ],
         temperature=1,
         max_tokens=1000,
@@ -203,9 +216,12 @@ def intention_to_ticket(intention_str):
     )
 
     response_json = response['choices'][0]['message']['content']
-    ticket = json.loads(response_json)
-
-    return ticket
+    try:
+        ticket = json.loads(response_json)
+        return ticket
+    except json.JSONDecodeError:
+        print(f"Failed to decode JSON: {response_json}", file=sys.stderr)
+        return None
 
 def main():
     # Initialize the main parser
