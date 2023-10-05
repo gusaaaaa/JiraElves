@@ -12,6 +12,7 @@ config = dotenv_values(".env")
 jira_domain = config["JIRA_DOMAIN"]
 jira_user = config["JIRA_USER"]
 jira_api_token = config["JIRA_TOKEN"]
+jira_project = config["JIRA_PROJECT"]
 openai_api_token = config["OPENAI_API_TOKEN"]
 
 jira = JIRA(server=jira_domain, basic_auth=(jira_user, jira_api_token))
@@ -46,15 +47,15 @@ def expand_issues():
         f.writelines(new_lines)
 
 def list_issues_in_release(release_number):
-    issues = jira.search_issues(f'project = "BMC2" and fixversion = {release_number} and status = Done ORDER BY created DESC')
+    issues = jira.search_issues(f'project = {jira_project} and fixversion = {release_number} and status = Done ORDER BY created DESC')
 
     for issue in issues:
         print(f'https://{jira_domain}/browse/{issue.key}')
 
 def read_intentions():
     """
-    The `from_intentions_to_tickets` function processes structured input from stdin
-    to create formatted issue tickets, which are returned in a list.
+    The `read_intentions` function processes loosely structured input from stdin 
+    to create and return a list of intentions.
 
     Input:
         The function expects the following format for input:
@@ -73,46 +74,19 @@ def read_intentions():
             ```
 
     Output:
-        The function processes the input to group lines into single intentions. Each
-        intention is then transformed into a formatted ticket description. The function
-        returns a list with all the transformed intentions.
+        The function processes the input to group lines into single intentions.
 
         Output Example:
             ```
             [
-                {
-                "issue_type": "Task",
-                "need": "Permit TransferController to handle transfer_id of arbitrary type.",
-                "context": "Currently, it seems that TransferController is not handling non-integer transfer IDs properly.",
-                "summary": "Allow TransferController to handle transfer_id of arbitrary type",
-                "background": "Currently, TransferController is only able to handle transfer_id that are integers. This is causing issues when the transfer_id is a string or other type, and the controller is unable to properly handle the request.",
-                "user_story": "As a developer, I want to be able to use the TransferController to handle transfer_id of any type so that I can ensure that all transfers are handled properly.",
-                "goals": "The goal is to make sure that TransferController is able to handle transfer_id of any type, including strings, integers, etc.",
-                "how_to_demo": "1. Create a transfer_id of a type other than an integer.\\n2. Use the TransferController to handle the request.\\n3. Verify that the request is handled properly.",
-                "acceptance_criteria": "- TransferController should be able to handle transfer_id of any data type.\\n- All requests should be handled properly regardless of the data type of transfer_id."
-                },
-                {
-                "issue_type": "Bug",
-                "need": "Remove the hardcoded API key for accessing Google Analytics in main-app.js.",
-                "context": "Currently, the API key for accessing Google Analytics is hardcoded in the main-app.js file.",
-                "summary": "Remove the hardcoded API key for accessing Google Analytics in main-app.js",
-                "background": "Hardcoding the API key for accessing Google Analytics in the main-app.js file poses a security risk, as anyone with access to the code can view the API key and potentially misuse it.",
-                "user_story": "As a developer, I want to remove the hardcoded API key for accessing Google Analytics in main-app.js, so that the API key is not exposed and can be managed securely.",
-                "goals": "The goal is to remove the hardcoded API key from the code and implement a more secure method for accessing Google Analytics.",
-                "how_to_demo": "1. Open the main-app.js file\\n2. Remove the hardcoded API key from the code\\n3. Implement a secure method for accessing Google Analytics",
-                "acceptance_criteria": "- The API key should not be present in the main-app.js file\\n- The application should still be able to access Google Analytics using a secure method"
-                }
+                "Permitir que TransferController maneje transfer_id de tipo arbitrario.",
+                "remove API key from code.\n  - currently the API key for accessing Google Analytics is hardcoded in main-app.js."
             ]
+            ```
 
     Internal Working:
         1. Reads raw intentions from stdin and splits them into lines.
-        2. Processes the lines to group related intentions.
-        3. Converts each intention into a JSON-formatted ticket description using `intention_to_ticket` function.
-        4. Returns a list with all the transformed intentions.
-
-    Notes:
-        - Ensure the `intention_to_ticket` function is correctly defined in the codebase.
-        - The function may not provide the desired results if the input format deviates from the mentioned specifications.
+        4. Returns a list with intentions.
     """
 
     # Read from stdin and split lines
@@ -157,7 +131,7 @@ def from_ticket_to_jira_issue_fields(ticket):
         """)
 
     fields = {
-        'project': "BMC2",
+        'project': jira_project,
         'summary': ticket['summary'],
         'description': formatted_description,
         'issuetype': {'name': ticket['issue_type']}
@@ -180,6 +154,35 @@ def command_create_issues_from_intentions():
         print(f"https://{jira_domain}/browse/{issue_key}")
 
 def intention_to_ticket(intention_str):
+    """
+        The `intention_to_ticket` function processes an intention to create and return a ticket description.
+        A ticket description is a dictionary that contains key elements, including background, goals, and acceptance criteria.
+
+        Input Example:
+            ```
+            remove API key from code.
+            - currently the API key for accessing Google Analytics is hardcoded in main-app.js.
+            ```
+
+        Output Example:
+            ```
+            {
+                "issue_type": "Bug",
+                "need": "Remove the hardcoded API key for accessing Google Analytics in main-app.js.",
+                "context": "Currently, the API key for accessing Google Analytics is hardcoded in the main-app.js file.",
+                "summary": "Remove the hardcoded API key for accessing Google Analytics in main-app.js",
+                "background": "Hardcoding the API key for accessing Google Analytics in the main-app.js file poses a security risk, as anyone with access to the code can view the API key and potentially misuse it.",
+                "user_story": "As a developer, I want to remove the hardcoded API key for accessing Google Analytics in main-app.js, so that the API key is not exposed and can be managed securely.",
+                "goals": "The goal is to remove the hardcoded API key from the code and implement a more secure method for accessing Google Analytics.",
+                "how_to_demo": "1. Open the main-app.js file\\n2. Remove the hardcoded API key from the code\\n3. Implement a secure method for accessing Google Analytics",
+                "acceptance_criteria": "- The API key should not be present in the main-app.js file\\n- The application should still be able to access Google Analytics using a secure method"
+            }
+
+        Internal Working:
+            1. Converts each intention into a JSON-formatted ticket description.
+            2. Parses the JSON into a dictionary.
+            3. Returns a ticket description.
+    """
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
