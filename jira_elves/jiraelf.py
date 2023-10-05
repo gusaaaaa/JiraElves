@@ -208,22 +208,36 @@ def intention_to_ticket(intention_str):
     return ticket
 
 def main():
-    parser = argparse.ArgumentParser(description='Process JIRA tasks.')
-    parser.add_argument('command', type=str, help='Use "expand" to expand issues or "list_release=RELEASE_NUMBER" to list issues in release.')
+    # Initialize the main parser
+    parser = argparse.ArgumentParser(description='A collection of elves for Jira users.')
+    subparsers = parser.add_subparsers(dest='command')
+
+    # Define the 'expand' command
+    expand_parser = subparsers.add_parser('expand', help='Expand issues.')
+
+    # Define the 'list_release' command
+    list_release_parser = subparsers.add_parser('list_release', help='List issues in the specified release.')
+    list_release_parser.add_argument('RELEASE_NUMBER', type=int, help='Release number to list the issues for.')
+
+    # Define the 'create_issues' command
+    create_issues_parser = subparsers.add_parser('create_issues', help='Convert intentions into Jira tickets.')
+    create_issues_parser.description = ('Convert a list of intentions into Jira tickets. '
+                                       'Reads raw intentions from stdin, processes them, and creates a Jira issue containing '
+                                       'a structured ticket description. Each intention starts on a new line. Additional details about '
+                                       'the intention can be prefixed with a space, `-`, or `*`. Multiple lines can be associated with an '
+                                       'intention, but they must be immediately below the primary line of the intention and must start with '
+                                       'one of the mentioned prefixes.')
 
     args = parser.parse_args()
 
-    # Split the command argument at '='
-    action, _, value = args.command.partition('=')
-
-    if action == "expand" and not value:
+    if args.command == "expand":
         expand_issues()
-    elif action == "list_release" and value:
-        list_issues_in_release(value)
-    elif action == "create_issues" and not value:
+    elif args.command == "list_release":
+        list_issues_in_release(args.RELEASE_NUMBER)
+    elif args.command == "create_issues":
         command_create_issues_from_intentions()
     else:
-        print("Invalid command. Use 'expand' or 'list_release=RELEASE_NUMBER'.")
+        parser.print_help()
 
 if __name__ == "__main__":
     main()
