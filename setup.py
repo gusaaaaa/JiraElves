@@ -7,7 +7,8 @@ setup(
     install_requires=[
         'requests==2.31.0',
         'python-dotenv',
-        'jira[cli]'
+        'jira[cli]',
+        'openai',
     ],
     entry_points={
       'console_scripts': [
