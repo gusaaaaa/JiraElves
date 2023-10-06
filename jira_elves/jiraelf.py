@@ -233,7 +233,7 @@ def main():
 
     # Define the 'list_release' command
     list_release_parser = subparsers.add_parser('list_release', help='List issues in the specified release.')
-    list_release_parser.add_argument('RELEASE_NUMBER', type=int, help='Release number to list the issues for.')
+    list_release_parser.add_argument('RELEASE_NUMBER', type=str, help='Release number to list the issues for.')
 
     # Define the 'create_issues' command
     create_issues_parser = subparsers.add_parser('create_issues', help='Convert intentions into Jira tickets.')
